@@ -1,12 +1,4 @@
 makeDSECov <- function(rsk, assets) {
-  ## -----------------------------------------------------------------------
-  ## USAGE: Function to build factor exposure matrix and specific risk vector
-  ##        for the supplied risk model.
-  ## INPUT: Risk model data, risk model name, security ID vector.
-  ## OUTPUT: List containing specific risk vector, exposure matrix, and
-  ##         vector of predicted betas.
-  ## -----------------------------------------------------------------------
-  
   if (any(duplicated(assets))) stop('Duplicate security IDs found.')
   
   r_ref <- match(assets, row.names(rsk$RSK))
@@ -31,7 +23,6 @@ makeDSECov <- function(rsk, assets) {
   stopifnot(all(dimnames(EXP)[[2]] == dimnames(rsk$COV)[[2]]))  # verify factor alignment
   
   return(list(D=SRISK, S=rsk$COV, EXP=EXP, BETA=BETA))
-  
 }
 
 buildQMatrix <- function(DSE) {
@@ -58,5 +49,22 @@ buildQMatrix <- function(DSE) {
   detach(map)
 
   return(FCF)
+}
+
+tsRiskDecomp <- function(hld, rsk, model) {
+  # Change to multiPortRiskDecomp
   
+  group <- dcast(hld, assets ~ Timestamp, value.var='SEMV', fun.aggregate=sum)
+  group <- subset(group, assets %in% rownames(rsk$RSK))
+  group <- dfNanToZero(group)
+  
+  DSE <- makeDSECov(rsk, group$assets)
+  FCF <- buildQMatrix(DSE)
+  
+  SEMV <- as.matrix(group[,-1])
+  
+  total <- diag(t(SEMV) %*% FCF$Q %*% SEMV)^.5 / 100
+  style <- diag(t(SEMV) %*% FCF$STYLE %*% SEMV)^.5 / 100
+  
+  data.frame(TotalVol=total,StyleVol=style)
 }
