@@ -5,8 +5,6 @@ makeDSECov <- function(rsk, assets) {
   ## INPUT: Risk model data, risk model name, security ID vector.
   ## OUTPUT: List containing specific risk vector, exposure matrix, and
   ##         vector of predicted betas.
-  ## 
-  ## NOTE: Expects non-duplicate entries in input ID vector
   ## -----------------------------------------------------------------------
   
   if (any(duplicated(assets))) stop('Duplicate security IDs found.')
@@ -15,8 +13,8 @@ makeDSECov <- function(rsk, assets) {
   
   BETA <- rsk$RSK[r_ref,"Beta"]
   SRISK <- rsk$RSK[r_ref,"SRISK%"]^2
-  model.name <- unique(sapply(strsplit(dimnames(rsk$COV)[[1]], '_'), '[', 1))
-  factor.names <- dimnames(rsk$RSK)[[2]][grepl(paste(model.name,"_",sep=""),dimnames(rsk$RSK)[[2]])]
+  model.name <- 
+  factor.names <- 
   EXP <- rsk$RSK[r_ref,factor.names]
   
   BETA[is.na(BETA)] <- 0
@@ -39,9 +37,9 @@ makeDSECov <- function(rsk, assets) {
 buildQMatrix <- function(DSE) {
   # Generate full asset covariance matrix
   
-  model <- unique(sapply(strsplit(dimnames(DSE$EXP)[[2]],'_'), '[', 1))
-  groups <- getFactorGroups(model)
-  map <- getFactorMapping(groups, DSE)
+  model <- 
+  groups <- 
+  map <- 
 
   attach(map)
   
