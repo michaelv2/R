@@ -37,15 +37,21 @@ getRuns <- function(x, decreasing=F) {
   return(runs)
 }
 
-get.bday <- function(startDt, endDt, region='US') {
+get.bday <- function(sdt, edt, region='US') {
   # Return business days for given date range
+  # Expects YYYYMMDD for date strings
   library(timeDate)
   
-  dtes <- seq(as.Date(as.character(startDt), '%Y%m%d'), 
-              as.Date(as.character(endDt), '%Y%m%d'), by=1)
+  if (class(sdt) != 'Date') {
+    sdt <- toDate(sdt)
+    edt <- toDate(edt)
+  }
+  dtes <- seq(sdt, edt, by=1)
+  years <- as.numeric(unique(strftime(dtes,'%Y')))
   dtes <- as.timeDate(dtes)
+  
   if (region=='US') {
-    dtes <- dtes[isBizday(dtes, holidays=holidayNYSE(), wday=1:5)]
+    dtes <- dtes[isBizday(dtes, holidays=holidayNYSE(years), wday=1:5)]
   } else if (region=='LN') {
     dtes <- dtes[isBizday(dtes, holidays=holidayLONDON(), wday=1:5)]
   }
@@ -53,4 +59,6 @@ get.bday <- function(startDt, endDt, region='US') {
   return(strftime(dtes, '%Y%m%d'))
 }
 
-
+toDate <- function(datestr) {
+  as.Date(as.character(datestr),'%Y%m%d')
+}
