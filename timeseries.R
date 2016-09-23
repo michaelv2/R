@@ -37,6 +37,10 @@ getRuns <- function(x, decreasing=F) {
   return(runs)
 }
 
+toDate <- function(datestr) {
+  as.Date(as.character(datestr),'%Y%m%d')
+}
+
 get.bday <- function(sdt, edt, region='US') {
   # Return business days for given date range
   # Expects YYYYMMDD for date strings
@@ -57,8 +61,4 @@ get.bday <- function(sdt, edt, region='US') {
   }
   
   return(strftime(dtes, '%Y%m%d'))
-}
-
-toDate <- function(datestr) {
-  as.Date(as.character(datestr),'%Y%m%d')
 }
