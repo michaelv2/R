@@ -7,7 +7,6 @@ makeDSECov <- function(rsk, secid, ignoreLSR=FALSE) {
   ##         and vector of predicted betas.
   ##
   ## NOTE: Expects non-duplicate entries in input ID vector
-  ##
   ## -----------------------------------------------------------------------
   library(Matrix)
 
