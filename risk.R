@@ -4,8 +4,8 @@ makeDSECov <- function(rsk, secid, ignoreLSR=FALSE) {
   ##        for the given security list.
   ## INPUT: rsk = risk model data, a list containing
   ##           (1) RSK: data matrix containing factor loadings, 
-  ##                    along with pbeta, total_risk, specific_risk (in % units)
-  ##           (2) COV: factor variance / covariance matrix (in % units)
+  ##                    along with pbeta, total_risk, specific_risk (in annual % units)
+  ##           (2) COV: factor variance / covariance matrix (in annual % units)
   ##        secid = vector of security identifiers
   ##        
   ## OUTPUT: List containing specific risk matrix, covariance, exposure matrix
