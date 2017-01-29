@@ -2,7 +2,12 @@ makeDSECov <- function(rsk, secid, ignoreLSR=FALSE) {
   ## -----------------------------------------------------------------------
   ## USAGE: Function to build factor exposure matrix and specific risk vector
   ##        for the given security list.
-  ## INPUT: Risk model data from loadRM(), security ID vector.
+  ## INPUT: rsk = risk model data, a list containing
+  ##           (1) RSK: data matrix containing factor loadings, 
+  ##                    along with pbeta, total_risk, specific_risk (in % units)
+  ##           (2) COV: factor variance / covariance matrix (in % units)
+  ##        secid = vector of security identifiers
+  ##        
   ## OUTPUT: List containing specific risk matrix, covariance, exposure matrix
   ##         and vector of predicted betas.
   ##
@@ -60,7 +65,12 @@ makeDSECov <- function(rsk, secid, ignoreLSR=FALSE) {
 }
 
 buildQMatrix <- function(DSE) {
-  # Generate full asset covariance matrix
+  ## -----------------------------------------------------------------------
+  ## USAGE: Generate full asset covariance matrix
+  ## INPUT: DSE object containing specific risk matrix, covariance matrix,
+  ##        factor loadings, predicted betas and linked specific risk
+  ## OUTPUT: List with asset level covariance matrix for each factor group
+  ## -----------------------------------------------------------------------
   
   f_groups <- getFactorGroups(DSE)
   attach(f_groups)
@@ -86,6 +96,58 @@ buildQMatrix <- function(DSE) {
   detach(f_groups)
   
   return(FCF)
+}
+  
+riskDecompCalc <- function(WEIGHT, DSE, method='Northfield') {
+  ## -----------------------------------------------------------------------
+  ## USAGE: Variance decomposition for a portfolio
+  ## INPUT: WEIGHT = vector of portfolio weights
+  ##        DSE    = DSE risk model object
+  ##        method = method for allocation of covariances between factors
+  ##           Barra: don't allocate any covariance to factors
+  ##           Northfield: allocate 50% of covariance to each factor pair
+  ## OUTPUT: List with total variance for each factor group
+  ## -----------------------------------------------------------------------
+  FCF <- buildQMatrix(DSE)
+  
+  fEXP <- t(WEIGHT) %*% DSE$EXP
+  
+  if (method=='Barra') {
+    # variance = W' * (X*COV*X' + SS) * W  ("Barra")
+    tot_var <- as.matrix(t(WEIGHT) %*% FCF$Q %*% WEIGHT)
+    mkt_var <- t(WEIGHT) %*% FCF$MARKET %*% WEIGHT
+    factor_var <- t(WEIGHT) %*% FCF$FACTOR %*% WEIGHT
+    style_var <- t(WEIGHT) %*% FCF$STYLE %*% WEIGHT
+    industry_var <- t(WEIGHT) %*% FCF$INDUSTRY %*% WEIGHT
+    country_var <- t(WEIGHT) %*% FCF$COUNTRY %*% WEIGHT
+    currency_var <- t(WEIGHT) %*% FCF$CURRENCY %*% WEIGHT
+    idio_var <- t(WEIGHT) %*% DSE$D %*% WEIGHT
+  } else {
+    # variance = W'X * (COV*X'*W) + W'*SS*W  ("Northfield")
+    VAR <- DSE$S %*% t(DSE$EXP) %*% WEIGHT
+    SS <- t(WEIGHT) %*% DSE$D %*% WEIGHT
+    
+    fmap <- getFactorGroups(DSE)
+    attach(fmap)
+    factor_var <- fEXP %*% VAR
+    tot_var <- as.matrix(factor_var + SS)
+    mkt_var <- t(fEXP[MARKET]) %*% VAR[MARKET]
+    style_var <- t(fEXP[STYLE]) %*% VAR[STYLE]
+    industry_var <- t(fEXP[INDUSTRY]) %*% VAR[INDUSTRY]
+    country_var <- t(fEXP[COUNTRY]) %*% VAR[COUNTRY]
+    currency_var <- t(fEXP[CURRENCY]) %*% VAR[CURRENCY]
+    idio_var <- SS
+    detach(fmap)
+  }
+  
+  data.frame(total=tot_var[1,1], 
+                   factor=factor_var[1,1], 
+                   market=mkt_var[1,1], 
+                   style=style_var[1,1], 
+                   industry=industry_var[1,1],
+                   country=country_var[1,1],
+                   currency=currency_var[1,1],
+                   specific=idio_var[1,1])
 }
 
 tsRiskDecomp <- function(hld, rsk, model) {
